@@ -102,6 +102,9 @@ def flicker_text(message,position):
         screen.blit(message,position)
         pygame.mixer.Sound.play(limit_sound)
 
+def projectile():
+    return
+
 
 pygame.key.set_repeat(40, 20)
 running = True

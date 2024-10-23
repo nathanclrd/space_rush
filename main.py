@@ -14,6 +14,8 @@ JAUNE= (255,255,0)
 
 limit_sound = pygame.mixer.Sound("./assets/limit.mp3")
 
+is_projectile_shot = False
+
 
 BOTTOM_OFFSET = 40
 
@@ -41,6 +43,16 @@ joueur = {
 joueur["size"] = joueur["image"].get_size()
 joueur["position_init"] = [LARGEUR_FENETRE//2-joueur['size'][0]//2,HAUTEUR_FENETRE-joueur['size'][1]-BOTTOM_OFFSET]
 
+
+projectile = {
+    "image" : pygame.transform.smoothscale(pygame.image.load("./assets/Projectile.png").convert_alpha(),(20,30)),
+    "position" : [0,0],
+    "vitesse" : [0,10],
+    "acceleration": [0,0],
+}
+projectile["size"] = projectile["image"].get_size()
+projectile["position_init"] = [LARGEUR_FENETRE//2-projectile['size'][0]//2,HAUTEUR_FENETRE-projectile['size'][1]-BOTTOM_OFFSET]
+
 message = police.render("Vous avez atteint la limite du monde", True,JAUNE)
 message_largeur, message_hauteur = police.size("Vous avez atteint la limite du monde")
 message_position = ((LARGEUR_FENETRE - message_largeur) // 2, HAUTEUR_FENETRE // 3)
@@ -59,7 +71,7 @@ def newEnnemy():
 
 
 def inputs():
-    global running,joueur
+    global running,joueur,projectile,is_projectile_shot
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -73,6 +85,10 @@ def inputs():
                 joueur['position'][1] -=12
             if event.key == pygame.K_DOWN:
                 joueur['position'][1] +=12
+            if event.key == pygame.K_SPACE and not is_projectile_shot:
+                projectile['position'][1] = joueur['position'][1]
+                projectile['position'][0] = joueur['position'][0] + (joueur['size'][0] // 2) - (projectile['size'][0] // 2)
+                is_projectile_shot = True
 
 joueur['position'] = joueur['position_init']
 def displayPlayer():
@@ -102,7 +118,15 @@ def flicker_text(message,position):
         screen.blit(message,position)
         pygame.mixer.Sound.play(limit_sound)
 
-def projectile():
+projectile['position'] = projectile['position_init']
+
+def projectile_tir():
+    global projectile,is_projectile_shot
+    if is_projectile_shot:
+     projectile['position'][1] -= projectile['vitesse'][1]
+     screen.blit(projectile['image'],(projectile['position']))
+    if projectile['position'][1] < 0:
+        is_projectile_shot = False
     return
 
 
@@ -113,6 +137,7 @@ while running:
     inputs()
     collision()
     displayPlayer()
+    projectile_tir()
     pygame.display.flip()
             
             

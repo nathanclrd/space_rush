@@ -1,6 +1,4 @@
 import random
-from types import new_class
-
 import pygame
 
 pygame.init()

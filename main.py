@@ -2,22 +2,28 @@ import pygame
 
 pygame.init()
 
+# Chargement des ressources
 image_fond = pygame.image.load("./assets/map.png")
 dimensions_fenetre = (800, 600)
 LARGEUR_FENETRE, HAUTEUR_FENETRE = dimensions_fenetre[0], dimensions_fenetre[1]
 
+# Configuration de la fenêtre
 ecran = pygame.display.set_mode(dimensions_fenetre)
 
+# Police et couleur
 police = pygame.font.SysFont('monospace', HAUTEUR_FENETRE // 20, True)
 ROUGE = (255, 0, 0)
 
+# Sons
 son_limite = pygame.mixer.Sound("./assets/beep.mp3")
 projectile_tire = False
 
+# Gestion du temps
 horloge = pygame.time.Clock()
 
 OFFSET_BAS = 40
 
+# Icône et titre de la fenêtre
 icone_jeu = pygame.image.load("./assets/icon.png")
 pygame.display.set_caption("Space Invaders")
 pygame.display.set_icon(icone_jeu)
@@ -27,6 +33,7 @@ def afficher_fond():
     image_redimensionnee = pygame.transform.smoothscale(image_fond, taille_fenetre)
     ecran.blit(image_redimensionnee, (0, 0))
 
+# Configuration du joueur
 joueur = {
     "image": pygame.transform.smoothscale(pygame.image.load("./assets/SpaceShip.png").convert_alpha(), (85, 85)),
     "position": [0, 0],
@@ -37,6 +44,7 @@ joueur = {
 joueur["taille"] = joueur["image"].get_size()
 joueur["position_initiale"] = [LARGEUR_FENETRE // 2 - joueur['taille'][0] // 2, HAUTEUR_FENETRE - joueur['taille'][1] - OFFSET_BAS]
 
+# Configuration du projectile
 projectile = {
     "image": pygame.transform.smoothscale(pygame.image.load("./assets/Projectile.png").convert_alpha(), (20, 30)),
     "position": [0, 0],
@@ -46,6 +54,7 @@ projectile = {
 projectile["taille"] = projectile["image"].get_size()
 projectile["position_initiale"] = [LARGEUR_FENETRE // 2 - projectile['taille'][0] // 2, HAUTEUR_FENETRE - projectile['taille'][1] - OFFSET_BAS]
 
+# Message d'avertissement
 message = police.render("Vous avez atteint la limite du monde", True, ROUGE)
 message_largeur, message_hauteur = police.size("Vous avez atteint la limite du monde")
 position_message = ((LARGEUR_FENETRE - message_largeur) // 2, HAUTEUR_FENETRE // 3)
@@ -56,6 +65,7 @@ dernier_temps_clignotement = pygame.time.get_ticks() / 1000
 temps_actuel = pygame.time.get_ticks() / 1000
 dernier_temps = 0
 
+# Fonction pour créer un nouvel ennemi
 def nouvel_ennemi(id):
     return {
         "id": id,
@@ -70,6 +80,7 @@ print(liste_ennemis)
 
 dt = temps_actuel - dernier_temps
 
+# Fonction pour gérer les entrées clavier
 def gerer_entrees():
     global en_cours, joueur, projectile, projectile_tire, dernier_temps, dt
     for evenement in pygame.event.get():

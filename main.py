@@ -1,3 +1,6 @@
+import random
+from types import new_class
+
 import pygame
 
 pygame.init()
@@ -51,9 +54,9 @@ projectile = {
     "vitesse": [0, 8],
     "acceleration": [0, 0],
 }
+
 projectile["taille"] = projectile["image"].get_size()
 projectile["position_initiale"] = [LARGEUR_FENETRE // 2 - projectile['taille'][0] // 2, HAUTEUR_FENETRE - projectile['taille'][1] - OFFSET_BAS]
-
 # Message d'avertissement
 message = police.render("Vous avez atteint la limite du monde", True, ROUGE)
 message_largeur, message_hauteur = police.size("Vous avez atteint la limite du monde")
@@ -65,22 +68,37 @@ dernier_temps_clignotement = pygame.time.get_ticks() / 1000
 temps_actuel = pygame.time.get_ticks() / 1000
 dernier_temps = 0
 
-# Fonction pour créer un nouvel ennemi
+liste_projectiles = []
+for projectile in liste_projectiles[:]:
+    projectile["rect"].y += projectile["vitesse"]
+    if projectile["rect"].bottom < 0:
+        liste_projectiles.remove(projectile)
+
+
 def nouvel_ennemi(id):
+
+    type_ennemi = ["Alien1","Alien2","Alien3"]
+    t = random.choice(type_ennemi)
     return {
+        'image_choice' : t,
         "id": id,
-        "position": [0, 0],
+        "position": [random.randint(0,LARGEUR_FENETRE-70), 0],
         "vitesse": [0, 0],
         "acceleration": [0, 0],
         "vie": 100,
-    }
+        "image": pygame.transform.smoothscale(pygame.image.load(f"./assets/{t}.png").convert_alpha(), (70, 70)),
+}
 
-liste_ennemis = [nouvel_ennemi(x) for x in range(10)]
-print(liste_ennemis)
+liste_ennemis = []
 
-dt = temps_actuel - dernier_temps
+for x in range(random.randint(1,5)):
+    a  = nouvel_ennemi(x)
+    a['rect'] = pygame.Rect(a['position'],a['image'].get_size())
+    liste_ennemis.append(a)
 
-# Fonction pour gérer les entrées clavier
+
+
+
 def gerer_entrees():
     global en_cours, joueur, projectile, projectile_tire, dernier_temps, dt
     for evenement in pygame.event.get():
@@ -106,6 +124,21 @@ joueur['position'] = joueur['position_initiale']
 def afficher_joueur():
     ecran.blit(joueur['image'], (joueur['position']))
 
+def afficher_ennemis():
+    global liste_ennemis
+    for i in liste_ennemis:
+        ecran.blit(i['image'], (i['position']))
+
+def tirer_projectile():
+    global projectile, projectile_tire
+    if projectile_tire:
+        projectile['position'][1] -= projectile['vitesse'][1]
+        ecran.blit(projectile['image'], (projectile['position']))
+    if projectile['position'][1] < 0:
+        projectile_tire = False
+    projectile['rect'] = pygame.Rect(projectile['position'],projectile['image'].get_size())
+    liste_projectiles.append(projectile)
+
 def detecter_collisions():
     if joueur['position'][0] + joueur['taille'][0] >= LARGEUR_FENETRE:
         joueur['position'][0] = LARGEUR_FENETRE - joueur['taille'][0]
@@ -116,6 +149,13 @@ def detecter_collisions():
     if joueur['position'][1] <= -200:
         joueur['position'][1] = -200
         clignoter_texte(message, position_message)
+    temps_hit = 0
+    for ennemi in liste_ennemis[:]:
+        if projectile["rect"].colliderect(ennemi["rect"]):
+            degats_image = pygame.transform.smoothscale(pygame.image.load(f"./assets/{ennemi['image_choice']}-hit.png").convert_alpha(),(70, 70))
+            ecran.blit(degats_image,ennemi['position'])
+
+
 
 def clignoter_texte(texte, position):
     global dernier_temps_clignotement, intervalle_clignotement, afficher_texte
@@ -128,24 +168,17 @@ def clignoter_texte(texte, position):
 
 projectile['position'] = projectile['position_initiale']
 
-def tirer_projectile():
-    global projectile, projectile_tire
-    if projectile_tire:
-        projectile['position'][1] -= projectile['vitesse'][1]
-        ecran.blit(projectile['image'], (projectile['position']))
-    if projectile['position'][1] < 0:
-        projectile_tire = False
 
 pygame.key.set_repeat(40, 20)
 en_cours = True
 while en_cours:
-    temps_actuel = pygame.time.get_ticks() / 1000
-    dt = temps_actuel - dernier_temps
+
     afficher_fond()
     gerer_entrees()
-    detecter_collisions()
     afficher_joueur()
+    afficher_ennemis()
     tirer_projectile()
+    detecter_collisions()
     pygame.display.flip()
     horloge.tick(60)
 

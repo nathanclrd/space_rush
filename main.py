@@ -78,6 +78,7 @@ def nouvel_ennemi(id):
     type_ennemi = ["Alien1","Alien2","Alien3"]
     t = random.choice(type_ennemi)
     return {
+        
         'image_choice' : t,
         "id": id,
         "position": [random.randint(0,LARGEUR_FENETRE-70), 0],

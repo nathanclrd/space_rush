@@ -3,19 +3,19 @@ import pygame
 
 pygame.init()
 
-# Chargement des ressources
+# Données de base et fond d ecran
 image_fond = pygame.image.load("./assets/map.png")
 dimensions_fenetre = (800, 600)
 LARGEUR_FENETRE, HAUTEUR_FENETRE = dimensions_fenetre[0], dimensions_fenetre[1]
 
-# Configuration de la fenêtre
+# definition de la fenêtre
 ecran = pygame.display.set_mode(dimensions_fenetre)
 
-# Police et couleur
+# Police message avertissement si on dépasse la limite du jeu.
 police = pygame.font.SysFont('monospace', HAUTEUR_FENETRE // 20, True)
 ROUGE = (255, 0, 0)
 
-# Sons
+# Son alerte
 son_limite = pygame.mixer.Sound("./assets/beep.mp3")
 projectile_tire = False
 
@@ -35,15 +35,15 @@ def afficher_fond():
     ecran.blit(image_redimensionnee, (0, 0))
 
 # Configuration du joueur
+joueur_image = pygame.transform.smoothscale(pygame.image.load("./assets/SpaceShip.png").convert_alpha(), (85, 85))
+joueur_taille = joueur_image.get_size()
 joueur = {
-    "image": pygame.transform.smoothscale(pygame.image.load("./assets/SpaceShip.png").convert_alpha(), (85, 85)),
-    "position": [0, 0],
+    "image": joueur_image,
+    "position": [LARGEUR_FENETRE // 2, HAUTEUR_FENETRE-80],
     "vitesse": [0, 0],
-    "acceleration": [0, 0],
     "vie": 100,
 }
-joueur["taille"] = joueur["image"].get_size()
-joueur["position_initiale"] = [LARGEUR_FENETRE // 2 - joueur['taille'][0] // 2, HAUTEUR_FENETRE - joueur['taille'][1] - OFFSET_BAS]
+# joueur["position_initiale"] = [LARGEUR_FENETRE // 2 - joueur['taille'][0] // 2, HAUTEUR_FENETRE - joueur['taille'][1] - OFFSET_BAS]
 
 # Configuration du projectile
 projectile = {
@@ -115,10 +115,10 @@ def gerer_entrees():
         joueur['position'][1] += 12
     if touches[pygame.K_SPACE] and not projectile_tire:
         projectile['position'][1] = joueur['position'][1]
-        projectile['position'][0] = joueur['position'][0] + (joueur['taille'][0] // 2) - (projectile['taille'][0] // 2)
+        projectile['position'][0] = joueur['position'][0] + (joueur_taille[0] // 2) - (projectile['taille'][0] // 2)
         projectile_tire = True
 
-joueur['position'] = joueur['position_initiale']
+# joueur['position'] = joueur['position_initiale']
 
 def afficher_joueur():
     ecran.blit(joueur['image'], (joueur['position']))
@@ -139,12 +139,12 @@ def tirer_projectile():
     liste_projectiles.append(projectile)
 
 def detecter_collisions():
-    if joueur['position'][0] + joueur['taille'][0] >= LARGEUR_FENETRE:
-        joueur['position'][0] = LARGEUR_FENETRE - joueur['taille'][0]
+    if joueur['position'][0] + joueur_taille[0] >= LARGEUR_FENETRE:
+        joueur['position'][0] = LARGEUR_FENETRE - joueur_taille[0]
     if joueur['position'][0] <= 0:
         joueur['position'][0] = 0
-    if joueur['position'][1] + joueur['taille'][1] >= HAUTEUR_FENETRE:
-        joueur['position'][1] = HAUTEUR_FENETRE - joueur['taille'][1]
+    if joueur['position'][1] + joueur_taille[1] >= HAUTEUR_FENETRE:
+        joueur['position'][1] = HAUTEUR_FENETRE - joueur_taille[1]
     if joueur['position'][1] <= -200:
         joueur['position'][1] = -200
         clignoter_texte(message, position_message)
@@ -178,6 +178,8 @@ while en_cours:
     afficher_ennemis()
     tirer_projectile()
     detecter_collisions()
+
+
     pygame.display.flip()
     horloge.tick(60)
 

@@ -50,12 +50,6 @@ son_limite.set_volume(0.8)
 son_tir = pygame.mixer.Sound("./assets/projectile.mp3")
 son_tir.set_volume(0.09)
 
-#Musique de fond
-# musique = pygame.mixer.Sound("./assets/background_music.mp3")
-# pygame.mixer.Sound.play(musique, loops=-1)# Régler le volume à 50%
-# musique.set_volume(0.1)
-
-
 
 # Icône et titre de la fenêtre
 icone_jeu = pygame.image.load("./assets/icon.png")
@@ -102,7 +96,7 @@ def nouveau_ennemi(id):
     type_ennemi = ["Alien1", "Alien2", "Alien3","Alien4","Alien5"]
     tailles_alien= {
         "Alien1": (70, 70),
-        "Alien2": (120, 120),
+        "Alien2": (100, 100),
         "Alien3": (70,70),
         "Alien4": (70,70),
         "Alien5": (70,70),
@@ -154,31 +148,16 @@ def nouvelle_barre_de_vie(id,max_vie=100,largeur_barre=200):
     }
 
 
-
-
-
-
-
-
 # Gere les entrées utilisateurs.
 temps_tir_precedent = 0
 delai_tir = 0.17
 
-
 def gerer_entrees():
-    global temps_tir_precedent,dimensions_fenetre,LARGEUR_FENETRE,HAUTEUR_FENETRE
-    global en_cours, joueur, projectile, projectile_tire, dernier_temps, dt
+    global en_cours, joueur,temps_tir_precedent
+
     for evenement in pygame.event.get():
         if evenement.type == pygame.QUIT:
             en_cours = False
-        if evenement.type == pygame.WINDOWMAXIMIZED:
-            print("Fenêtre maximisée")
-            dimensions_fenetre[0] = ecran.get_size()[0]
-            dimensions_fenetre[1] = ecran.get_size()[1]
-            LARGEUR_FENETRE, HAUTEUR_FENETRE = dimensions_fenetre[0], dimensions_fenetre[1]
-
-    
-
     touches = pygame.key.get_pressed()
     if touches[pygame.K_RIGHT] or touches[pygame.K_d]:
         joueur["position"][0] += joueur["vitesse"][0]
@@ -194,11 +173,6 @@ def gerer_entrees():
         temps_tir_precedent=temps_actuel_en_s
 
 
-
-
-
-
-
 def afficher_joueur():
     ecran.blit(joueur["image"], (joueur["position"]))
 
@@ -210,9 +184,9 @@ def afficher_projectiles():
         projectile["position"][1] -= projectile["vitesse"]
         ecran.blit(projectile["image"], projectile["position"])
 
+
+# Génère les ennemis
 liste_ennemis = []
-
-
 dernier_temps_spawn = 0
 def generer_ennemis():
     global dernier_temps_spawn
@@ -226,22 +200,20 @@ def generer_ennemis():
             a["rect"] = pygame.Rect(a["position"], ennemi_taille)
         dernier_temps_spawn = temps_actuel_en_s
 
+#affiche les ennemis
 def afficher_ennemis():
     for i in liste_ennemis:
         ecran.blit(i["image"], (i["position"]))
-
+        # ecran.fill(ROUGE, (i["position"][0], i["position"][1] - 10, 70, 10))
         i["position"][1] += i["vitesse"][1]
         i["position"][0] += i["vitesse"][0]
         i["rect"] = pygame.Rect(i["position"], i["image"].get_size())
 
-
+#Tire un projectile
 def tirer_projectile():
     projectile = nouveau_projectile()
     pygame.mixer.Sound.play(son_tir)
     liste_projectiles.append(projectile)
-
-
-
 
 def detecter_collisions():
     global score,tailles_alien
@@ -276,8 +248,6 @@ def detecter_collisions():
             ennemi["vitesse"][0] = -ennemi["vitesse"][0]
         if ennemi["position"][0] <= 0:
             ennemi["vitesse"][0] = -ennemi["vitesse"][0]
-        # if ennemi["position"][1] <= 0:
-        #     ennemi["vitesse"][1] = -ennemi["vitesse"][1]
         if ennemi["position"][1] >= HAUTEUR_FENETRE:
             liste_ennemis.remove(ennemi)
 
@@ -303,7 +273,8 @@ while en_cours:
     afficher_fond()
     gerer_entrees()
     afficher_joueur()
-    if random.randint(0, 20) == 0 and len(liste_ennemis)<6:
+    rand_nombre = random.randint(0,100)
+    if rand_nombre== 0 and len(liste_ennemis)<6:
         generer_ennemis()
     afficher_ennemis()
     afficher_projectiles()

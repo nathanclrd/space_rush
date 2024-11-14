@@ -28,7 +28,7 @@ Space Rush est un jeu de tir en 2D où le joueur doit naviguer dans un espace in
    ```bash
    git clone https://github.com/USERNAME/space-rush.git
 
-## lancer-le-jeu 
+## Lancer le jeu 
     Pour lancer le jeu, il vous suffira de lancer la commande :
     ```bash
     python3 main.py

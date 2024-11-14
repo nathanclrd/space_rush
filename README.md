@@ -8,8 +8,7 @@
 3. [Installation](#installation)
 4. [Lancer le jeu](#lancer-le-jeu)
 5. [Technologies utilisées](#technologies-utilisées)
-6. [Contribuer](#contribuer)
-7. [Auteurs](#auteurs)
+6. [Auteurs](#auteurs)
 
 ## Description
 Space Rush est un jeu de tir en 2D où le joueur doit naviguer dans un espace infini tout en évitant des astéroïdes et en détruisant des ennemis. Le jeu propose un gameplay dynamique avec des niveaux de difficulté croissants, des power-ups et des ennemis variés. Chaque partie est différente, offrant une expérience unique à chaque session.
@@ -37,3 +36,6 @@ Space Rush est un jeu de tir en 2D où le joueur doit naviguer dans un espace in
 ## Technologies utilisées
     Dans ce projet, l'unique technologie utilisée est pygame.
     https://www.pygame.org/docs/
+
+## Auteurs 
+0xNTN - Kwartz

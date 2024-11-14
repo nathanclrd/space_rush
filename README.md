@@ -26,15 +26,14 @@ Space Rush est un jeu de tir en 2D où le joueur doit naviguer dans un espace in
 1. Clonez ce dépôt sur votre machine locale :
 
    ```bash
-   git clone https://github.com/USERNAME/space-rush.git
+   git clone https://github.com/USERNAME/space-rush.git && pip install requirements.txt
+    ```
 
 ## Lancer le jeu 
     Pour lancer le jeu, il vous suffira de lancer la commande :
     ```bash
     python3 main.py
     ```
-## technologies-utilisées
-    Dans ce projet, l'unique technologie utilisée est pygame. Pour installer les dépendances nécessaires, lancer la commande : 
-    ```bash
-    pip install requirements.txt
-    ```
+## Technologies utilisées
+    Dans ce projet, l'unique technologie utilisée est pygame.
+    https://www.pygame.org/docs/

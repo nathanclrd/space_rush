@@ -16,6 +16,8 @@ image_fond = pygame.image.load("./assets/map.png")
 dimensions_fenetre = [800, 600]
 LARGEUR_FENETRE, HAUTEUR_FENETRE = dimensions_fenetre[0], dimensions_fenetre[1]
 
+
+
 # Horloge du jeu
 horloge = pygame.time.Clock()
 # temps_actuel_en_s = pygame.time.get_ticks() / 1000
@@ -53,20 +55,63 @@ pygame.display.set_caption("Space Rush")
 
 # Configuration du joueur
 joueur_image = pygame.transform.scale(
-    pygame.image.load("assets/spaceship.png").convert_alpha(), (85, 85)
-)
+    pygame.image.load("assets/spaceship.png").convert_alpha(), (85, 85))
+joueur_image_hit = pygame.transform.scale(
+    pygame.image.load("assets/spaceship-hit.png").convert_alpha(), (85, 85))
 joueur_taille = joueur_image.get_size()
 joueur = {
     "image": joueur_image,
+    "image-hit" : joueur_image_hit,
     "position": [LARGEUR_FENETRE // 2 - joueur_taille[0] // 2, HAUTEUR_FENETRE - 80],
     "vitesse": [10, 8],
     "vie": 100,
 }
-
 # Configuration du projectile
 projectile_image = pygame.transform.scale(
     pygame.image.load("assets/projectile.png").convert_alpha(), (20, 30))
 projectile_taille = projectile_image.get_size()
+
+
+def meteorite():
+    meteorite_image = pygame.transform.scale(
+        pygame.image.load("assets/meteor.png").convert_alpha(), (70, 70))
+    meteorite_taille = meteorite_image.get_size()
+    meteorite = {
+        "image": meteorite_image,
+        "position": [random.randint(0, LARGEUR_FENETRE - 70), -meteorite_taille[1]],
+        "vitesse": [0, 2],
+    }
+    liste_meteorites.append(meteorite)
+
+
+liste_meteorites = []
+def afficher_meteorite():
+    for i in liste_meteorites:
+        ecran.blit(i["image"], (i["position"]))
+        i["position"][1] += i["vitesse"][1]
+        i["position"][0] += i["vitesse"][0]
+        i["rect"] = pygame.Rect(i["position"], i["image"].get_size())
+
+def soin():
+    medkit_image = pygame.transform.scale(pygame.image.load("./assets/medkit.png"),(60,50))
+    medkit = {
+        "image": medkit_image,
+        "position": [random.randint(0, LARGEUR_FENETRE - 70), 0],
+        "vitesse": [0, 2.5],
+    }
+    liste_medkit.append(medkit)
+liste_medkit = [] 
+def afficher_soin():
+    for s in liste_medkit:
+        ecran.blit(s["image"], (s["position"]))
+        s["position"][1] += s["vitesse"][1]
+        s["position"][0] += s["vitesse"][0]
+        s["rect"] = pygame.Rect(s["position"], s["image"].get_size())
+        if s["rect"].colliderect(joueur["rect"]):
+            if joueur["vie"] < 100 and joueur["vie"]+20 <= 100:
+                joueur["vie"] += 20
+            liste_medkit.remove(s)
+
 
 
 def nouveau_projectile():
@@ -158,10 +203,13 @@ def nouvelle_barre_de_vie(ennemi):
 
 # Gere les entrées utilisateurs.
 temps_tir_precedent = 0
-delai_tir = 0.17
+delai_tir = 0.18
+
+
+    
 
 def gerer_principal():
-    global en_cours, menu,jeu
+    global en_cours, menu,jeu,lose,score
     for evenement in pygame.event.get():
             if evenement.type == pygame.QUIT:
                 jeu = False
@@ -180,7 +228,12 @@ def gerer_principal():
                     elif evenement.key == pygame.K_RETURN:
                         menu = False
                         en_cours = True
+                        score = 0
                         pygame.mixer.Sound.stop(musique_menu)
+                elif lose:
+                    if evenement.key == pygame.K_ESCAPE:
+                        lose = False
+                        menu = True
 
 
 def gerer_entrees():
@@ -197,30 +250,29 @@ def gerer_entrees():
         joueur["position"][1] -= joueur["vitesse"][1]
     if touches[pygame.K_DOWN] or touches[pygame.K_s]:
         joueur["position"][1] += joueur["vitesse"][1]
-
     if touches[pygame.K_SPACE] and temps_actuel_en_s - temps_tir_precedent > delai_tir:
         tirer_projectile()
         temps_tir_precedent = temps_actuel_en_s
 
-
 def afficher_joueur():
+    if joueur["vie"] <= 0:
+        lose = True
+        clear_screen()
     ecran.blit(joueur["image"], (joueur["position"]))
-
+    joueur["rect"] = pygame.Rect(joueur["position"], joueur_taille)
+    pygame.draw.rect(ecran, ROUGE, (20, 20, joueur_taille[0], 5), border_radius=2)
+    pygame.draw.rect(ecran, VERT, (20, 20, joueur_taille[0] * (joueur["vie"] / 100), 5),border_radius=2)
 
 liste_projectiles = []
-
-
 def afficher_projectiles():
     for projectile in liste_projectiles[:]:
         projectile["rect"] = pygame.Rect(projectile["position"], projectile["image"].get_size())
         projectile["position"][1] -= projectile["vitesse"]
         ecran.blit(projectile["image"], projectile["position"])
 
-
 # Génère les ennemis
 liste_ennemis = []
 dernier_temps_spawn = 0
-
 
 def generer_ennemis():
     global dernier_temps_spawn
@@ -252,9 +304,19 @@ def tirer_projectile():
     pygame.mixer.Sound.play(son_tir)
     liste_projectiles.append(projectile)
 
+def ecran_lose():
+    afficher_fond()
+    gameover = pygame.transform.smoothscale(pygame.image.load("./assets/gameover.png").convert_alpha(), (400, 300))
+    score_texte = police.render(f"Score :  {score}", True, ROUGE)
+    jouer_texte = police.render("Appuyez sur Echap pour quitter", True, ROUGE)
+    ecran.blit(gameover, (LARGEUR_FENETRE // 2 - 400 // 2, 100))
+    ecran.blit(jouer_texte, (LARGEUR_FENETRE // 2 - jouer_texte.get_width() // 2, HAUTEUR_FENETRE-120 ))
+    ecran.blit(score_texte, (LARGEUR_FENETRE // 2 - score_texte.get_width() // 2, HAUTEUR_FENETRE-170 ))
+    pygame.mixer.Sound.play(musique_menu)
+    pygame.display.flip()
 
 def detecter_collisions():
-    global score, tailles_alien, barres_de_vie
+    global score, tailles_alien, barres_de_vie,lose,en_cours
     # Vérifie à droite
     if joueur["position"][0] + joueur_taille[0] >= LARGEUR_FENETRE:
         joueur["position"][0] = LARGEUR_FENETRE - joueur_taille[0]
@@ -280,14 +342,11 @@ def detecter_collisions():
                            (ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
                 ennemi["vie"] -= 2
                 if ennemi["vie"] <= 0:
-                    score += 1;
+                    score += 1
                     liste_ennemis.remove(ennemi)
                     for barre in barres_de_vie[:]:
                         if barre["ennemi"] == ennemi:
                             barres_de_vie.remove(barre)
-
-            if ennemi["position"][1] >= HAUTEUR_FENETRE:
-                liste_ennemis.remove(ennemi)
     #Verifier si les aliens touchent un des bords
     for ennemi in liste_ennemis[:]:
         if ennemi["position"][0] + tailles_alien[ennemi["image_choice"]][0] >= LARGEUR_FENETRE:
@@ -295,7 +354,33 @@ def detecter_collisions():
         if ennemi["position"][0] <= 0:
             ennemi["vitesse"][0] = -ennemi["vitesse"][0]
         if ennemi["position"][1] >= HAUTEUR_FENETRE:
+            joueur["vie"] -= 100/3
             liste_ennemis.remove(ennemi)
+            if joueur["vie"] <= 0:
+                lose = True
+                en_cours = False
+                joueur["vie"] = 100
+                clear_screen()
+        if ennemi["rect"].colliderect(joueur["rect"]):
+            joueur["vie"] -= 100/5
+            joueur["position"][1] += ennemi["rect"].height //2
+            ecran.blit(joueur["image-hit"], (joueur["position"]))
+            if joueur["vie"] <= 0:
+                lose = True
+                en_cours = False
+                joueur["vie"] = 100
+                clear_screen()
+
+
+    for meteor in liste_meteorites:
+        if meteor["rect"].colliderect(joueur["rect"]):
+            joueur["vie"] -= 99
+            if joueur["vie"] <= 0:
+                lose = True
+                en_cours = False
+                joueur["vie"] = 100
+                clear_screen()
+
 
 
 # Sert à faire un texte d'alerte si le joueur dépasse la limite
@@ -313,12 +398,37 @@ def score_temporaire():
     global score
     ecran.blit(police.render(f"Score: {score}", True, BLANC), (LARGEUR_FENETRE // 2 - 50, 10))
 
+dernier_temps_meteorite = 0
+def generer_meteor():
+    global dernier_temps_meteorite
+    dt = temps_actuel_en_s - dernier_temps_meteorite
+    if dt > 5:
+        meteorite()
+        dernier_temps_meteorite = temps_actuel_en_s
+
+dernier_temps_soin = 0
+def generer_soin():
+    global dernier_temps_soin
+    dt = temps_actuel_en_s - dernier_temps_soin
+    if dt > 10:
+        soin()
+        dernier_temps_soin = temps_actuel_en_s
+
+def clear_screen():
+    liste_meteorites.clear()
+    liste_ennemis.clear()
+
 jeu = True
 en_cours = False
 menu = True
+lose = False
+
 while jeu:
     if menu:
         afficher_menu()
+        gerer_principal()
+    if lose:
+        ecran_lose()
         gerer_principal()
     if en_cours:
         temps_actuel_en_s = pygame.time.get_ticks() / 1000
@@ -328,8 +438,12 @@ while jeu:
         rand_nombre = random.randint(0, 100)
         if rand_nombre == 0 and len(liste_ennemis) < 6:
             generer_ennemis()
+        generer_meteor()
+        generer_soin()
+        afficher_soin()
         afficher_ennemis()
         afficher_projectiles()
+        afficher_meteorite()
         detecter_collisions()
         score_temporaire()
         pygame.mixer.Sound.stop(musique_menu)

@@ -1,2 +1,4 @@
 test2.py
 venv/
+.idea
+.DS_Store

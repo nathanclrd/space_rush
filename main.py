@@ -74,7 +74,7 @@ projectile_taille = projectile_image.get_size()
 
 def meteorite():
     meteorite_image = pygame.transform.scale(
-        pygame.image.load("assets/meteor.png").convert_alpha(), (70, 70))
+        pygame.image.load("assets/meteor.png").convert_alpha(), (50, 50))
     meteorite_taille = meteorite_image.get_size()
     meteorite = {
         "image": meteorite_image,
@@ -96,7 +96,7 @@ def soin():
     medkit_image = pygame.transform.scale(pygame.image.load("./assets/medkit.png"),(60,50))
     medkit = {
         "image": medkit_image,
-        "position": [random.randint(0, LARGEUR_FENETRE - 70), 0],
+        "position": [random.randint(0, LARGEUR_FENETRE - 70), -medkit_image.get_size()[1]],
         "vitesse": [0, 2.5],
     }
     liste_medkit.append(medkit)
@@ -178,10 +178,13 @@ def nouveau_ennemi(id):
         "id": id,
         "position": nouvelle_position,
         "vitesse": [random_vitesse_x, random_vitesse_y],
-        "acceleration": [0, 0],
         "vie": 100,
         "image": ennemi_image,
+        "max_vie" :100,
     }
+    if t_choice == "Alien2":
+        ennemi["vie"] = 250
+        ennemi["max_vie"] = 250
     ennemi["rect"] = pygame.Rect(ennemi["position"], ennemi_taille)
     barre_vie = nouvelle_barre_de_vie(ennemi)
     barres_de_vie.append(barre_vie)
@@ -250,6 +253,7 @@ def gerer_entrees():
         joueur["position"][1] -= joueur["vitesse"][1]
     if touches[pygame.K_DOWN] or touches[pygame.K_s]:
         joueur["position"][1] += joueur["vitesse"][1]
+    
     if touches[pygame.K_SPACE] and temps_actuel_en_s - temps_tir_precedent > delai_tir:
         tirer_projectile()
         temps_tir_precedent = temps_actuel_en_s
@@ -297,7 +301,7 @@ def afficher_ennemis():
         for barre in barres_de_vie:
             if barre["ennemi"] == i:
                 pygame.draw.rect(ecran, ROUGE, (i["position"][0], i["position"][1] - 10, barre["largeur_barre"], barre["hauteur_barre"]))
-                pygame.draw.rect(ecran, VERT, (i["position"][0], i["position"][1] - 10, barre["largeur_barre"] * (i["vie"] / 100), barre["hauteur_barre"]))
+                pygame.draw.rect(ecran, VERT, (i["position"][0], i["position"][1] - 10, barre["largeur_barre"] * (i["vie"]/i["max_vie"]), barre["hauteur_barre"]))
 #Tire un projectile
 def tirer_projectile():
     projectile = nouveau_projectile()
@@ -315,8 +319,10 @@ def ecran_lose():
     pygame.mixer.Sound.play(musique_menu)
     pygame.display.flip()
 
+
+
 def detecter_collisions():
-    global score, tailles_alien, barres_de_vie,lose,en_cours
+    global score, tailles_alien, barres_de_vie,lose,en_cours,temps_image_precedent
     # Vérifie à droite
     if joueur["position"][0] + joueur_taille[0] >= LARGEUR_FENETRE:
         joueur["position"][0] = LARGEUR_FENETRE - joueur_taille[0]
@@ -331,15 +337,15 @@ def detecter_collisions():
         joueur["position"][1] = -200
         clignoter_texte(message, position_message)
     #Verifie si les projectiles sont sortis de l'écran
-
     for projectile in liste_projectiles[:]:
         for ennemi in liste_ennemis[:]:
             if projectile["rect"].colliderect(ennemi["rect"]):
                 degats_image = pygame.transform.scale(
                     pygame.image.load(f"./assets/Ennemis/{ennemi['image_choice']}-hit.png").convert_alpha(),
                     tailles_alien[ennemi["image_choice"]], )
-                ecran.blit(degats_image,
-                           (ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
+                
+                
+                ecran.blit(degats_image,(ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
                 ennemi["vie"] -= 2
                 if ennemi["vie"] <= 0:
                     score += 1
@@ -347,6 +353,7 @@ def detecter_collisions():
                     for barre in barres_de_vie[:]:
                         if barre["ennemi"] == ennemi:
                             barres_de_vie.remove(barre)
+                            
     #Verifier si les aliens touchent un des bords
     for ennemi in liste_ennemis[:]:
         if ennemi["position"][0] + tailles_alien[ennemi["image_choice"]][0] >= LARGEUR_FENETRE:
@@ -356,6 +363,7 @@ def detecter_collisions():
         if ennemi["position"][1] >= HAUTEUR_FENETRE:
             joueur["vie"] -= 100/3
             liste_ennemis.remove(ennemi)
+            ecran.blit(joueur["image-hit"], (joueur["position"]))
             if joueur["vie"] <= 0:
                 lose = True
                 en_cours = False
@@ -417,6 +425,7 @@ def generer_soin():
 def clear_screen():
     liste_meteorites.clear()
     liste_ennemis.clear()
+    liste_medkit.clear()
 
 jeu = True
 en_cours = False

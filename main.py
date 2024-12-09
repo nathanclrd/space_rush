@@ -28,7 +28,7 @@ ecran = pygame.display.set_mode(dimensions_fenetre)
 
 # Message avertissement si on dépasse la limite du jeu
 police = pygame.font.SysFont("monospace", HAUTEUR_FENETRE // 20, True)
-message = police.render("Vous avez atteint la limite du monde", True, ROUGE)
+message = police.render("Vous avez atteint la limite du monde", True, BLANC)
 
 message_largeur, message_hauteur = police.size("Vous avez atteint la limite du monde")
 position_message = ((LARGEUR_FENETRE - message_largeur) // 2, HAUTEUR_FENETRE // 3)
@@ -47,6 +47,10 @@ musique_menu = pygame.mixer.Sound("./assets/musique_menu.mp3")
 #Son de tir
 son_tir = pygame.mixer.Sound("./assets/projectile.mp3")
 son_tir.set_volume(0.09)
+
+#Son de heal
+son_heal = pygame.mixer.Sound("./assets/heal.mp3")
+son_heal.set_volume(0.09)
 
 # Icône et titre de la fenêtre
 icone_jeu = pygame.image.load("./assets/icon.png")
@@ -110,6 +114,7 @@ def afficher_soin():
         if s["rect"].colliderect(joueur["rect"]):
             if joueur["vie"] < 100 and joueur["vie"]+20 <= 100:
                 joueur["vie"] += 20
+                pygame.mixer.Sound.play(son_heal)
             liste_medkit.remove(s)
 
 
@@ -125,8 +130,8 @@ def nouveau_projectile():
 def afficher_menu():
     afficher_fond()
     titre = pygame.transform.smoothscale(pygame.image.load("./assets/logo_menu.png").convert_alpha(), (370, 250))
-    jouer_texte = police.render("Appuyez sur Entrée pour jouer", True, ROUGE)
-    quitter_texte = police.render("Appuyez sur Echap pour quitter", True, ROUGE)
+    jouer_texte = police.render("Appuyez sur Entrée pour jouer", True, BLANC)
+    quitter_texte = police.render("Appuyez sur Echap pour quitter", True, BLANC)
     ecran.blit(titre, (LARGEUR_FENETRE // 2 - titre.get_width() // 2, HAUTEUR_FENETRE // 9))
     ecran.blit(jouer_texte, (LARGEUR_FENETRE // 2 - jouer_texte.get_width() // 2, HAUTEUR_FENETRE // 2))
     ecran.blit(quitter_texte, (LARGEUR_FENETRE // 2 - quitter_texte.get_width() // 2, HAUTEUR_FENETRE // 2 + 60))
@@ -181,6 +186,8 @@ def nouveau_ennemi(id):
         "vie": 100,
         "image": ennemi_image,
         "max_vie" :100,
+        "touche_recente":100,
+        "touche":False
     }
     if t_choice == "Alien2":
         ennemi["vie"] = 250
@@ -321,8 +328,9 @@ def ecran_lose():
 
 
 
+compteur_ennemi_passe = 0
 def detecter_collisions():
-    global score, tailles_alien, barres_de_vie,lose,en_cours,temps_image_precedent
+    global score, tailles_alien, barres_de_vie,lose,en_cours,temps_image_precedent,compteur_ennemi_passe
     # Vérifie à droite
     if joueur["position"][0] + joueur_taille[0] >= LARGEUR_FENETRE:
         joueur["position"][0] = LARGEUR_FENETRE - joueur_taille[0]
@@ -340,19 +348,20 @@ def detecter_collisions():
     for projectile in liste_projectiles[:]:
         for ennemi in liste_ennemis[:]:
             if projectile["rect"].colliderect(ennemi["rect"]):
-                degats_image = pygame.transform.scale(
-                    pygame.image.load(f"./assets/Ennemis/{ennemi['image_choice']}-hit.png").convert_alpha(),
-                    tailles_alien[ennemi["image_choice"]], )
-                
-                
-                ecran.blit(degats_image,(ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
-                ennemi["vie"] -= 2
+                ennemi["touche"] = True
+                ennemi["vie"] -= 20
                 if ennemi["vie"] <= 0:
                     score += 1
                     liste_ennemis.remove(ennemi)
                     for barre in barres_de_vie[:]:
                         if barre["ennemi"] == ennemi:
                             barres_de_vie.remove(barre)
+                ennemi["touche_recente"] -=1
+                liste_projectiles.remove(projectile)
+                if ennemi["touche_recente"] == 0:
+                    ennemi["touche"] = False
+                    ennemi["touche_recente"] = 100
+            
                             
     #Verifier si les aliens touchent un des bords
     for ennemi in liste_ennemis[:]:
@@ -364,6 +373,7 @@ def detecter_collisions():
             joueur["vie"] -= 100/3
             liste_ennemis.remove(ennemi)
             ecran.blit(joueur["image-hit"], (joueur["position"]))
+
             if joueur["vie"] <= 0:
                 lose = True
                 en_cours = False
@@ -371,8 +381,15 @@ def detecter_collisions():
                 clear_screen()
         if ennemi["rect"].colliderect(joueur["rect"]):
             joueur["vie"] -= 100/5
-            joueur["position"][1] += ennemi["rect"].height //2
-            ecran.blit(joueur["image-hit"], (joueur["position"]))
+
+            if joueur["position"][1]+joueur_taille[1]+ennemi["rect"].height//2> HAUTEUR_FENETRE:
+                if joueur["position"][0]-joueur_taille[0]//2 >= LARGEUR_FENETRE//2:
+                    joueur["position"][0] -= ennemi["rect"].width //2
+                elif joueur["position"][0]-joueur_taille[0]//2 < LARGEUR_FENETRE//2:
+                    joueur["position"][0] += ennemi["rect"].width //2
+            else:
+                joueur["position"][1] += ennemi["rect"].height //2
+                ecran.blit(joueur["image-hit"], (joueur["position"]))
             if joueur["vie"] <= 0:
                 lose = True
                 en_cours = False
@@ -426,6 +443,15 @@ def clear_screen():
     liste_meteorites.clear()
     liste_ennemis.clear()
     liste_medkit.clear()
+    
+    
+def afficher_hit():
+    for ennemi in liste_ennemis:
+        if ennemi["touche_recente"] !=0 and ennemi["touche"]:
+            degats_image = pygame.transform.scale(pygame.image.load(f"./assets/Ennemis/{ennemi['image_choice']}-hit.png").convert_alpha(),tailles_alien[ennemi["image_choice"]] )
+            ecran.blit(degats_image,(ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
+            print(ennemi["touche_recente"])
+            
 
 jeu = True
 en_cours = False
@@ -451,11 +477,16 @@ while jeu:
         generer_soin()
         afficher_soin()
         afficher_ennemis()
+        afficher_hit()
         afficher_projectiles()
         afficher_meteorite()
         detecter_collisions()
         score_temporaire()
+        
+        
         pygame.mixer.Sound.stop(musique_menu)
         pygame.display.flip()
+        
+        
         horloge.tick(60)
 

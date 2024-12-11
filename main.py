@@ -1,6 +1,35 @@
-import random
+"""
+    Jeu Space Rush
+    Repo : 
+    Auteur :  COLARD Nathan
+    Date :  2024-12-11
+    Version :  1.0
+    Description :  Jeu de tir en 2D semblable à Space Invaders.
+    
+    Source :
+        Bibliothèque utilisées :
+            - Pygame : https://www.pygame.org/
+            - Random : https://docs.python.org/3/library/random.html
+        Images : 
+            -Map ; https://www.freepik.com/premium-vector/stars-darkness-background_6756913.htm
+            -Spaceship : https://www.istockphoto.com/fr/vectoriel/%C3%A9l%C3%A9ments-de-lespace-r%C3%A9tro-arcade-jeu-pixel-envahisseurs-les-vaisseaux-les-gm950674686-259493753 
+            -Projectile :https://www.istockphoto.com/fr/vectoriel/%C3%A9l%C3%A9ments-de-lespace-r%C3%A9tro-arcade-jeu-pixel-envahisseurs-les-vaisseaux-les-gm950674686-259493753  
+            -Aliens : https://opengameart.org/content/space-shooter-environment
+            -Meteorite : https://www.freepik.com/premium-vector/pixel-art-meteor-game-asset-design_359072043.htm
+            -Logo menu : Leonardo AI
+            -Gameover inspiré de : https://pngimg.com/image/83334
+            -Aliens + modifié:https://stock.adobe.com/fr/images/character-sitting-in-spaceship-vector-alien-floating-in-space-pixelated-personage-of-8-bit-pixel-game-ufo-monster-with-prolonged-head-shape-flat-style-pixel-cosmic-monster-for-mobile-app-games/288837890?asset_id=334711288
+        Polices : 
 
+            - Pixelify :https://fonts.google.com/specimen/Pixelify+Sans 
+        Effets sonores :
+            -MP3 : https://pixabay.com/sound-effects/
+            
+    """
+
+import random
 import pygame
+
 
 pygame.init()
 pygame.mixer.init()
@@ -27,7 +56,7 @@ dernier_temps = 0
 ecran = pygame.display.set_mode(dimensions_fenetre)
 
 # Message avertissement si on dépasse la limite du jeu
-police = pygame.font.SysFont("monospace", HAUTEUR_FENETRE // 20, True)
+police = pygame.font.Font("assets/pixelify.ttf", HAUTEUR_FENETRE // 20)
 message = police.render("Vous avez atteint la limite du monde", True, BLANC)
 
 message_largeur, message_hauteur = police.size("Vous avez atteint la limite du monde")
@@ -69,16 +98,18 @@ joueur = {
     "position": [LARGEUR_FENETRE // 2 - joueur_taille[0] // 2, HAUTEUR_FENETRE - 80],
     "vitesse": [10, 8],
     "vie": 100,
+    "puissance_tir" : 20,
+    "touche":False,
+    "touche_recente":100
 }
 # Configuration du projectile
 projectile_image = pygame.transform.scale(
     pygame.image.load("assets/projectile.png").convert_alpha(), (20, 30))
 projectile_taille = projectile_image.get_size()
 
-
+#image meteorite
+meteorite_image = pygame.transform.scale(pygame.image.load("assets/meteor.png").convert_alpha(), (50, 50))
 def meteorite():
-    meteorite_image = pygame.transform.scale(
-        pygame.image.load("assets/meteor.png").convert_alpha(), (50, 50))
     meteorite_taille = meteorite_image.get_size()
     meteorite = {
         "image": meteorite_image,
@@ -96,8 +127,10 @@ def afficher_meteorite():
         i["position"][0] += i["vitesse"][0]
         i["rect"] = pygame.Rect(i["position"], i["image"].get_size())
 
+#image medkit
+medkit_img = pygame.image.load("./assets/medkit.png")
 def soin():
-    medkit_image = pygame.transform.scale(pygame.image.load("./assets/medkit.png"),(60,50))
+    medkit_image = pygame.transform.scale(medkit_img,(60,50))
     medkit = {
         "image": medkit_image,
         "position": [random.randint(0, LARGEUR_FENETRE - 70), -medkit_image.get_size()[1]],
@@ -112,7 +145,9 @@ def afficher_soin():
         s["position"][0] += s["vitesse"][0]
         s["rect"] = pygame.Rect(s["position"], s["image"].get_size())
         if s["rect"].colliderect(joueur["rect"]):
-            if joueur["vie"] < 100 and joueur["vie"]+20 <= 100:
+            if joueur["vie"] < 100:
+                if joueur["vie"] +20 >100:
+                    joueur["vie"] =100
                 joueur["vie"] += 20
                 pygame.mixer.Sound.play(son_heal)
             liste_medkit.remove(s)
@@ -127,14 +162,19 @@ def nouveau_projectile():
     }
 
 # Afficher le menu
+image_menu =pygame.image.load("./assets/logo_menu.png") 
 def afficher_menu():
     afficher_fond()
-    titre = pygame.transform.smoothscale(pygame.image.load("./assets/logo_menu.png").convert_alpha(), (370, 250))
+    titre = pygame.transform.smoothscale(image_menu.convert_alpha(), (370, 250))
     jouer_texte = police.render("Appuyez sur Entrée pour jouer", True, BLANC)
     quitter_texte = police.render("Appuyez sur Echap pour quitter", True, BLANC)
+    attention_texte = police.render("Attention , les météorite",True,ROUGE)
+    attention_texte2 = police.render("vous tuent instantanément",True,ROUGE)
     ecran.blit(titre, (LARGEUR_FENETRE // 2 - titre.get_width() // 2, HAUTEUR_FENETRE // 9))
     ecran.blit(jouer_texte, (LARGEUR_FENETRE // 2 - jouer_texte.get_width() // 2, HAUTEUR_FENETRE // 2))
     ecran.blit(quitter_texte, (LARGEUR_FENETRE // 2 - quitter_texte.get_width() // 2, HAUTEUR_FENETRE // 2 + 60))
+    ecran.blit(attention_texte,(LARGEUR_FENETRE // 2 - attention_texte.get_width() // 2, HAUTEUR_FENETRE // 2 + 120))
+    ecran.blit(attention_texte2,(LARGEUR_FENETRE // 2 - attention_texte2.get_width()//2, HAUTEUR_FENETRE // 2 + 160))
     pygame.mixer.Sound.play(musique_menu)
     pygame.display.flip()
 
@@ -145,28 +185,59 @@ def afficher_fond():
     image_redimensionnee = pygame.transform.scale(image_fond, taille_fenetre)
     ecran.blit(image_redimensionnee, (0, 0))
 
-
-def nouveau_ennemi(id):
-    global ennemi_taille, tailles_alien
-    type_ennemi = ["Alien1", "Alien2", "Alien3", "Alien4", "Alien5"]
+#aliens_image
+def charger_ressources_ennemis():
+    global tailles_alien,type_ennemi
+    """Charge toutes les images et tailles des ennemis."""
+    type_ennemi = ["Alien1","Alien2", "Alien3", "Alien4", "Alien5"]
     tailles_alien = {
         "Alien1": (70, 70),
-        "Alien2": (100, 100),
+        "Alien2": (100,100),
         "Alien3": (70, 70),
         "Alien4": (70, 70),
         "Alien5": (70, 70),
     }
-    t_choice = random.choice(type_ennemi)
-    ennemi_image = pygame.transform.scale(
-        pygame.image.load(f"./assets/Ennemis/{t_choice}.png").convert_alpha(), tailles_alien[t_choice])
-    ennemi_taille = ennemi_image.get_size()
+
+    ressources_ennemis = {}
+    for ennemi in type_ennemi:
+        image = pygame.image.load(f"./assets/Ennemis/{ennemi}.png").convert_alpha()
+        image_redimensionnee = pygame.transform.scale(image, tailles_alien[ennemi])
+        ressources_ennemis[ennemi] = {
+            "image": image_redimensionnee,
+            "taille": tailles_alien[ennemi],
+        }
+
+    return ressources_ennemis
+
+ressources_ennemis = charger_ressources_ennemis()
+exclude = True
+
+def creer_ennemi(exclude):
+    if exclude:
+        
+        choix_stage1 = random.choice([alien for alien in ressources_ennemis.keys() if alien != 'Alien2'])
+        choix = ressources_ennemis[choix_stage1]
+        ennemi_taille = choix["taille"]   
+        ennemi_image = choix["image"]
+        return ennemi_image,ennemi_taille,choix_stage1
+    else:
+        choix_stage1 = random.choice([alien for alien in ressources_ennemis.keys()])
+        choix = ressources_ennemis[choix_stage1]
+        ennemi_taille = choix["taille"]   
+        ennemi_image = choix["image"]
+        return ennemi_image,ennemi_taille,choix_stage1
+
+
+def nouveau_ennemi(id):
+    global tailles_alien,type_ennemi,ennemi_image,ennemi_taille,choix_stage1
+    ennemi_image, ennemi_taille, choix_stage1 = creer_ennemi(exclude)
     # Génération initiale de la position
     position_valide = False
     while not position_valide:
         nouvelle_position = [random.randint(0, LARGEUR_FENETRE - 70), -ennemi_taille[1]]
         rect_nouvel_ennemi = pygame.Rect(nouvelle_position, (70, 70))
 
-        # Vérification de la superposition avec les autres ennemis
+        # Vérification de la superposition avec ls autres ennemis
         position_valide = True
         for ennemi in liste_ennemis:
             if rect_nouvel_ennemi.colliderect(ennemi["rect"]):
@@ -177,9 +248,9 @@ def nouveau_ennemi(id):
     random_vitesse_x = random.choice(vitesses_x)
     random_vitesse_y = random.choice(vitesses_y)
     # Si la position est valide, on crée l'ennemi avec cette position
-
+    
     ennemi = {
-        "image_choice": t_choice,
+        "image_choice": choix_stage1,
         "id": id,
         "position": nouvelle_position,
         "vitesse": [random_vitesse_x, random_vitesse_y],
@@ -189,7 +260,7 @@ def nouveau_ennemi(id):
         "touche_recente":100,
         "touche":False
     }
-    if t_choice == "Alien2":
+    if choix_stage1 == "Alien2":
         ennemi["vie"] = 250
         ennemi["max_vie"] = 250
     ennemi["rect"] = pygame.Rect(ennemi["position"], ennemi_taille)
@@ -266,9 +337,12 @@ def gerer_entrees():
         temps_tir_precedent = temps_actuel_en_s
 
 def afficher_joueur():
+    global exclude
     if joueur["vie"] <= 0:
         lose = True
         clear_screen()
+        exclude = True
+        joueur["puissance_tir"]=20
     ecran.blit(joueur["image"], (joueur["position"]))
     joueur["rect"] = pygame.Rect(joueur["position"], joueur_taille)
     pygame.draw.rect(ecran, ROUGE, (20, 20, joueur_taille[0], 5), border_radius=2)
@@ -338,8 +412,8 @@ def detecter_collisions():
     if joueur["position"][0] <= 0:
         joueur["position"][0] = 0
     # Vérifie en bas
-    if joueur["position"][1] + joueur_taille[1] >= HAUTEUR_FENETRE:
-        joueur["position"][1] = HAUTEUR_FENETRE - joueur_taille[1]
+    if joueur["position"][1] + joueur_taille[1] >= HAUTEUR_FENETRE+200:
+        joueur["position"][1] = HAUTEUR_FENETRE - joueur_taille[1]+200
     # Verifie si le joueur dépasse la limite
     if joueur["position"][1] <= -200:
         joueur["position"][1] = -200
@@ -349,18 +423,17 @@ def detecter_collisions():
         for ennemi in liste_ennemis[:]:
             if projectile["rect"].colliderect(ennemi["rect"]):
                 ennemi["touche"] = True
-                ennemi["vie"] -= 20
+                ennemi["vie"] -= joueur["puissance_tir"]
                 if ennemi["vie"] <= 0:
                     score += 1
                     liste_ennemis.remove(ennemi)
                     for barre in barres_de_vie[:]:
                         if barre["ennemi"] == ennemi:
                             barres_de_vie.remove(barre)
-                ennemi["touche_recente"] -=1
-                liste_projectiles.remove(projectile)
-                if ennemi["touche_recente"] == 0:
-                    ennemi["touche"] = False
-                    ennemi["touche_recente"] = 100
+                if projectile in liste_projectiles:
+                    liste_projectiles.remove(projectile)
+                if projectile["position"][1] < -projectile["image"].get_size()[1] and projectile in liste_projectiles:
+                    liste_projectiles.remove(projectile)
             
                             
     #Verifier si les aliens touchent un des bords
@@ -382,14 +455,9 @@ def detecter_collisions():
         if ennemi["rect"].colliderect(joueur["rect"]):
             joueur["vie"] -= 100/5
 
-            if joueur["position"][1]+joueur_taille[1]+ennemi["rect"].height//2> HAUTEUR_FENETRE:
-                if joueur["position"][0]-joueur_taille[0]//2 >= LARGEUR_FENETRE//2:
-                    joueur["position"][0] -= ennemi["rect"].width //2
-                elif joueur["position"][0]-joueur_taille[0]//2 < LARGEUR_FENETRE//2:
-                    joueur["position"][0] += ennemi["rect"].width //2
-            else:
-                joueur["position"][1] += ennemi["rect"].height //2
-                ecran.blit(joueur["image-hit"], (joueur["position"]))
+
+            joueur["position"][1] += ennemi["rect"].height //2
+            joueur["touche"] = True
             if joueur["vie"] <= 0:
                 lose = True
                 en_cours = False
@@ -419,8 +487,26 @@ def clignoter_texte(texte, position):
         pygame.mixer.Sound.play(son_limite)
 
 
+compteur_affichage=100
+def stage2():
+    global compteur_affichage,joueur,type_ennemi,tailles_alien,exclude
+    clear_screen()
+    taille_fenetre = ecran.get_size()
+    image_redimensionnee = pygame.transform.scale(image_fond, taille_fenetre)
+    ecran.blit(image_redimensionnee, (0, 0))
+    texte_stage2 = police.render("Stage 2",True,BLANC)
+    texte_power_down = police.render("Attention, votre arme fait moins de dégâts !",True,BLANC)
+    ecran.blit(texte_stage2,(LARGEUR_FENETRE//2-texte_stage2.get_width()//2,HAUTEUR_FENETRE//2))
+    ecran.blit(texte_power_down,(LARGEUR_FENETRE//2-texte_power_down.get_width()//2,HAUTEUR_FENETRE//2+40))
+    if compteur_affichage==100:
+        joueur["puissance_tir"]-=5
+        exclude= False
+    compteur_affichage-=1
+
 def score_temporaire():
     global score
+    if score == 20 and compteur_affichage >0:
+        stage2()
     ecran.blit(police.render(f"Score: {score}", True, BLANC), (LARGEUR_FENETRE // 2 - 50, 10))
 
 dernier_temps_meteorite = 0
@@ -446,47 +532,8 @@ def clear_screen():
     
     
 def afficher_hit():
-    for ennemi in liste_ennemis:
-        if ennemi["touche_recente"] !=0 and ennemi["touche"]:
-            degats_image = pygame.transform.scale(pygame.image.load(f"./assets/Ennemis/{ennemi['image_choice']}-hit.png").convert_alpha(),tailles_alien[ennemi["image_choice"]] )
-            ecran.blit(degats_image,(ennemi["position"][0] - ennemi["vitesse"][0], ennemi["position"][1] - ennemi["vitesse"][1]))
-            print(ennemi["touche_recente"])
-            
+    if joueur["touche"]==True and joueur["touche_recente"] != 0:
 
-jeu = True
-en_cours = False
-menu = True
-lose = False
-
-while jeu:
-    if menu:
-        afficher_menu()
-        gerer_principal()
-    if lose:
-        ecran_lose()
-        gerer_principal()
-    if en_cours:
-        temps_actuel_en_s = pygame.time.get_ticks() / 1000
-        afficher_fond()
-        gerer_entrees()
-        afficher_joueur()
-        rand_nombre = random.randint(0, 100)
-        if rand_nombre == 0 and len(liste_ennemis) < 6:
-            generer_ennemis()
-        generer_meteor()
-        generer_soin()
-        afficher_soin()
-        afficher_ennemis()
-        afficher_hit()
-        afficher_projectiles()
-        afficher_meteorite()
-        detecter_collisions()
-        score_temporaire()
-        
-        
-        pygame.mixer.Sound.stop(musique_menu)
-        pygame.display.flip()
-        
-        
-        horloge.tick(60)
-
+        ecran.blit(joueur_image_hit,(joueur["position"]))
+        joueur["touche_recente"] -=2
+        if joueur["touc

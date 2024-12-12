@@ -596,3 +596,4 @@ while jeu:
         
         horloge.tick(60)
 
+

@@ -1,7 +1,7 @@
 """
     Jeu Space Rush
     Repo : 
-    Auteur :  COLARD Nathan
+    Auteur :  COLARD Nathan, Altemirov Abdourachman
     Date :  2024-12-11
     Version :  1.0
     Description :  Jeu de tir en 2D semblable à Space Invaders.
